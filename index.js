@@ -141,9 +141,11 @@ function reCheck(date, from, to, num, siteList) {
     check(date, from, to, num, siteList);
   }, 1000 * 60 * 1);
 }
-console.log('start at:', new Date());
 
+// start
+console.log('start at:', new Date());
 const goList = ['T7', 'T231', 'Z19', 'Z43'];
 const backList = ['T42', 'T56', 'T232', 'Z20', 'Z44'];
+
 check('2018-04-28', 'BJP', 'XAY', 0, goList);
 check('2018-05-01', 'XAY', 'BJP', 0, backList);
