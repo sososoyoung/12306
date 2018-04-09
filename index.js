@@ -1,6 +1,7 @@
 const fs = require('fs');
 const https = require('https');
 const notifier = require('node-notifier');
+const { table } = require('table');
 // String
 var ca = fs.readFileSync('./cert/srca.cer.pem');
 const UA =
@@ -13,7 +14,7 @@ function request(date, from, to, num) {
       port: 443,
       rejectUnauthorized: false,
       method: 'GET',
-      path: `/otn/leftTicket/queryX?leftTicketDTO.train_date=${date}&leftTicketDTO.from_station=${from}&leftTicketDTO.to_station=${to}&purpose_codes=ADULT`,
+      path: `/otn/leftTicket/queryO?leftTicketDTO.train_date=${date}&leftTicketDTO.from_station=${from}&leftTicketDTO.to_station=${to}&purpose_codes=ADULT`,
       ca: [ca], // 证书
       headers: {
         Connection: 'keep-alive',
@@ -30,24 +31,46 @@ function request(date, from, to, num) {
         data += buff; // 查询结果（JSON格式）
       });
       res.on('end', function() {
-        // console.log('data:', data);
         try {
-          resolve(JSON.parse(data).data);
+          const resData = JSON.parse(data).data;
+          resolve(resData);
         } catch (e) {
+          console.error('parse err:', e);
           resolve({});
         }
+      });
+      res.on('error', function(err) {
+        console.error('request err:', err);
+        resolve(err);
       });
     });
   });
 }
 
-function check(date, from, to, num) {
+function showTable({ date, from, to, list }) {
+  console.log(`${date}::${from}->${to} at: ${new Date()}`);
+  const data = [[`${from}->${to}`, '时间', '硬卧', '硬座', '高2']];
+  list.forEach(item => {
+    data.push([
+      item.train_name,
+      `${item.start_time}->${item.end_time}`,
+      item.yw,
+      item.yz,
+      item.g2
+    ]);
+  });
+  const output = table(data);
+  console.log(output);
+}
+function check(date, from, to, num, siteList) {
+  console.log(`check: ${from}-${to} ${new Date()}`);
   request(date, from, to, num)
     .then((data = {}) => {
-      const { result = [] } = data;
+      const { result = [], map } = data;
       let resultMap = result.map(item => item.split('|'));
       return {
         len: resultMap.length,
+        map,
         result: resultMap,
         checked: resultMap.map((item = []) => ({
           train_name: item[3],
@@ -58,14 +81,13 @@ function check(date, from, to, num) {
           gt: item[32],
           g1: item[31],
           g2: item[30],
-          yw: item[29],
-          yz: item[28],
+          yw: item[28],
+          yz: item[29],
           wz: item[26]
         }))
       };
     })
-    .then(({ result, len, checked }) => {
-      console.log('checked:', checked);
+    .then(({ result, len, checked, map }) => {
       const log = (...args) => {
         console.log(`${new Date()}::${date}:${from}-->${to}`);
         console.log(...args);
@@ -74,13 +96,17 @@ function check(date, from, to, num) {
         // Object
         notifier.notify({ title: '新增车次', message: '检测到新增车次!' });
       }
-      let usefull = {
+      const usefull = {
         have: false,
+        date,
+        from: map[from] || from,
+        to: map[to] || to,
         list: []
       };
       checked.forEach((item = {}, index) => {
         if (
           item &&
+          siteList.includes(item.train_name) &&
           (Number(item.yz) > 0 ||
             item.yz == '有' ||
             Number(item.g2) > 0 ||
@@ -97,28 +123,27 @@ function check(date, from, to, num) {
           title: `${date}:${from}-->${to} 有票`,
           message: usefull.list[0].date
         });
-        log('use full:', usefull);
+        showTable(usefull);
       }
-      //
-      // log('result:', result);
-      // log('checked:', checked);
-      // log('len:', len);
-      // log('result length:', result.length);
-      reCheck(date, from, to, num);
+      reCheck(date, from, to, num, siteList);
     })
     .catch(e => {
-      console.error('err:', e);
+      console.error('check err:', e);
     });
 }
 let timer = {};
-function reCheck(date, from, to, num) {
+function reCheck(date, from, to, num, siteList) {
   let key = `${date}:${from}-->${to}`;
   if (timer[key]) {
     clearTimeout(timer[key]);
   }
   timer[key] = setTimeout(function() {
-    check(date, from, to, num);
+    check(date, from, to, num, siteList);
   }, 1000 * 60 * 1);
 }
 console.log('start at:', new Date());
-check('2018-02-13', 'BJP', 'HDP', 59);
+
+const goList = ['T7', 'T231', 'Z19', 'Z43'];
+const backList = ['T42', 'T56', 'T232', 'Z20', 'Z44'];
+check('2018-04-28', 'BJP', 'XAY', 0, goList);
+check('2018-05-01', 'XAY', 'BJP', 0, backList);
