@@ -14,7 +14,7 @@ function request(date, from, to, num) {
       port: 443,
       rejectUnauthorized: false,
       method: 'GET',
-      path: `/otn/leftTicket/queryO?leftTicketDTO.train_date=${date}&leftTicketDTO.from_station=${from}&leftTicketDTO.to_station=${to}&purpose_codes=ADULT`,
+      path: `/otn/leftTicket/queryZ?leftTicketDTO.train_date=${date}&leftTicketDTO.from_station=${from}&leftTicketDTO.to_station=${to}&purpose_codes=ADULT`,
       ca: [ca], // 证书
       headers: {
         Connection: 'keep-alive',
@@ -62,7 +62,7 @@ function showTable({ date, from, to, list }) {
   const output = table(data);
   console.log(output);
 }
-function check(date, from, to, num, siteList) {
+function check(date, from, to, num, removeList) {
   console.log(`check: ${from}-${to} ${new Date()}`);
   request(date, from, to, num)
     .then((data = {}) => {
@@ -106,7 +106,7 @@ function check(date, from, to, num, siteList) {
       checked.forEach((item = {}, index) => {
         if (
           item &&
-          siteList.includes(item.train_name) &&
+          !removeList.includes(item.train_name) &&
           (Number(item.yz) > 0 ||
             item.yz == '有' ||
             Number(item.g2) > 0 ||
@@ -125,7 +125,7 @@ function check(date, from, to, num, siteList) {
         });
         showTable(usefull);
       }
-      reCheck(date, from, to, num, siteList);
+      reCheck(date, from, to, num, removeList);
     })
     .catch(e => {
       console.error('check err:', e);
@@ -146,6 +146,7 @@ function reCheck(date, from, to, num, siteList) {
 console.log('start at:', new Date());
 const goList = ['T7', 'T231', 'Z19', 'Z43'];
 const backList = ['T42', 'T56', 'T232', 'Z20', 'Z44'];
+const removeList = ['K5211'];
 
-check('2018-04-28', 'BJP', 'XAY', 0, goList);
-check('2018-05-01', 'XAY', 'BJP', 0, backList);
+check('2019-02-02', 'BJP', 'HDP', 0, removeList);
+// check('2018-05-01', 'XAY', 'BJP', 0, backList);
