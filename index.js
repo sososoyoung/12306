@@ -155,8 +155,10 @@ sendMsg({
   message: "2020-01-22: BJP --> HDP"
 });
 
-check("2020-01-20", "BJP", "YZK", 0, []);
-sendMsg({
-  title: "start check(30s):",
-  message: "2020-01-20: BJP --> YZK"
-});
+setTimeout(() => {
+  check("2020-01-20", "BJP", "YZK", 0, []);
+  sendMsg({
+    title: "start check(30s):",
+    message: "2020-01-20: BJP --> YZK"
+  });
+}, 10000);
