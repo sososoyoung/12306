@@ -161,4 +161,4 @@ setTimeout(() => {
     title: "start check(30s):",
     message: "2020-01-20: BJP --> YZK"
   });
-}, 10000);
+}, 15000);
