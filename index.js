@@ -1,46 +1,47 @@
-const fs = require('fs');
-const https = require('https');
-const notifier = require('node-notifier');
-const { table } = require('table');
-// String
-var ca = fs.readFileSync('./cert/srca.cer.pem');
-const UA =
-  'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36';
+const fs = require("fs");
+const https = require("https");
+const { table } = require("table");
+const { sendMsg } = require("./msg.js");
 
-function request(date, from, to, num) {
-  return new Promise((resolve, reject) => {
+// String
+var ca = fs.readFileSync("./cert/srca.cer.pem");
+const UA =
+  "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36";
+
+function request(date, from, to) {
+  return new Promise(resolve => {
     const options = {
-      hostname: 'kyfw.12306.cn', // 12306
+      hostname: "kyfw.12306.cn", // 12306
       port: 443,
       rejectUnauthorized: false,
-      method: 'GET',
+      method: "GET",
       path: `/otn/leftTicket/queryZ?leftTicketDTO.train_date=${date}&leftTicketDTO.from_station=${from}&leftTicketDTO.to_station=${to}&purpose_codes=ADULT`,
       ca: [ca], // 证书
       headers: {
-        Connection: 'keep-alive',
-        Host: 'kyfw.12306.cn',
-        'User-Agent': UA,
-        Referer: 'https://kyfw.12306.cn/otn/leftTicket/init',
+        Connection: "keep-alive",
+        Host: "kyfw.12306.cn",
+        "User-Agent": UA,
+        Referer: "https://kyfw.12306.cn/otn/leftTicket/init",
         Cookie:
-          'JSESSIONID=DECF7F5103D1BA7A8F335811EB98A41A; fp_ver=4.5.1; RAIL_EXPIRATION=1506056378568; RAIL_DEVICEID=O55geSebql5oIo_pSxFwIOYuE1-3h4_KUSs4yzI5E408_mf-0xwpj2inSot9OSQYngOfPM9Wo3qpwWGMhJVNboPEKIDXzp0zpbGNnrppoKunrMmxzmd33W4EDE9FVZfwINu3MS2pmt8u1jaXNU2Lp3hs9iM9Dq0m; route=9036359bb8a8a461c164a04f8f50b252; BIGipServerotn=384827914.38945.0000; _jc_save_fromStation=%u5317%u4EAC%2CBJP; _jc_save_toStation=%u90AF%u90F8%2CHDP; _jc_save_fromDate=2017-09-30; _jc_save_toDate=2017-09-21; _jc_save_wfdc_flag=dc'
+          "JSESSIONID=995842D0EF97D82DBCE83AC33B6800D2; tk=chOVfSk--pG_50OXf2iseHwwCQMUVFR0Eigofk14L7473s2s0; _jc_save_wfdc_flag=dc; BIGipServerotn=368050698.64545.0000; BIGipServerpool_passport=183304714.50215.0000; RAIL_EXPIRATION=1546779590368; RAIL_DEVICEID=Uf4suubLU31OvMiLM_SoRyPrur5MKZgCy_xRGkIGyRSWu5VPgg6fUlL2USFWV3bH3P8TyYQoLkkt5qXWVGOL6u6nmOUVZIKXpiPunLA91Yu-19i57aQSkFp2M2AZJS60WTxdEw6eCBRcwA2Kl7lwApsk0iXLsIvi; route=c5c62a339e7744272a54643b3be5bf64; _jc_save_toDate=2019-01-04; current_captcha_type=Z; _jc_save_toStation=%u90AF%u90F8%2CHDP; _jc_save_fromStation=%u5317%u4EAC%2CBJP; _jc_save_fromDate=2019-02-02"
       }
     };
-    const req = https.get(options, function(res) {
-      let data = '';
-      res.on('data', function(buff) {
+    https.get(options, function(res) {
+      let data = "";
+      res.on("data", function(buff) {
         data += buff; // 查询结果（JSON格式）
       });
-      res.on('end', function() {
+      res.on("end", function() {
         try {
           const resData = JSON.parse(data).data;
           resolve(resData);
         } catch (e) {
-          console.error('parse err:', e);
+          console.error("parse err:", e.message);
           resolve({});
         }
       });
-      res.on('error', function(err) {
-        console.error('request err:', err);
+      res.on("error", function(err) {
+        console.error("request err:", err);
         resolve(err);
       });
     });
@@ -49,7 +50,7 @@ function request(date, from, to, num) {
 
 function showTable({ date, from, to, list }) {
   console.log(`${date}::${from}->${to} at: ${new Date()}`);
-  const data = [[`${from}->${to}`, '时间', '硬卧', '硬座', '高2']];
+  const data = [[`${from}->${to}`, "时间", "硬卧", "硬座", "高2"]];
   list.forEach(item => {
     data.push([
       item.train_name,
@@ -67,7 +68,7 @@ function check(date, from, to, num, removeList) {
   request(date, from, to, num)
     .then((data = {}) => {
       const { result = [], map } = data;
-      let resultMap = result.map(item => item.split('|'));
+      let resultMap = result.map(item => item.split("|"));
       return {
         len: resultMap.length,
         map,
@@ -87,14 +88,13 @@ function check(date, from, to, num, removeList) {
         }))
       };
     })
-    .then(({ result, len, checked, map }) => {
-      const log = (...args) => {
-        console.log(`${new Date()}::${date}:${from}-->${to}`);
-        console.log(...args);
-      };
+    .then(({ result, checked, map }) => {
+      if (result.length < 1) {
+        return reCheck(date, from, to, num, removeList);
+      }
       if (num && result.length > num) {
         // Object
-        notifier.notify({ title: '新增车次', message: '检测到新增车次!' });
+        sendMsg({ title: "新增车次", message: "检测到新增车次!" });
       }
       const usefull = {
         have: false,
@@ -103,32 +103,32 @@ function check(date, from, to, num, removeList) {
         to: map[to] || to,
         list: []
       };
-      checked.forEach((item = {}, index) => {
+      checked.forEach((item = {}) => {
         if (
           item &&
           !removeList.includes(item.train_name) &&
           (Number(item.yz) > 0 ||
-            item.yz == '有' ||
+            // item.yz == '有' ||
             Number(item.g2) > 0 ||
-            item.g2 == '有' ||
+            item.g2 == "有" ||
             Number(item.yw) > 0 ||
-            item.yw == '有')
+            item.yw == "有")
         ) {
           usefull.have = true;
           usefull.list.push(item);
         }
       });
       if (usefull.have) {
-        notifier.notify({
+        sendMsg({
           title: `${date}:${from}-->${to} 有票`,
-          message: usefull.list[0].date
+          message: usefull.list.map(i => i.train_name).join(", ")
         });
         showTable(usefull);
       }
       reCheck(date, from, to, num, removeList);
     })
     .catch(e => {
-      console.error('check err:', e);
+      console.error("check err:", e);
     });
 }
 let timer = {};
@@ -139,14 +139,24 @@ function reCheck(date, from, to, num, siteList) {
   }
   timer[key] = setTimeout(function() {
     check(date, from, to, num, siteList);
-  }, 1000 * 60 * 1);
+  }, 1000 * 30 * 1);
 }
 
 // start
-console.log('start at:', new Date());
-const goList = ['T7', 'T231', 'Z19', 'Z43'];
-const backList = ['T42', 'T56', 'T232', 'Z20', 'Z44'];
-const removeList = ['K5211'];
+console.log("start at:", new Date());
+// const goList = ["T7", "T231", "Z19", "Z43"];
+// const backList = ["T42", "T56", "T232", "Z20", "Z44"];
+const removeList = ["K5211", "K599"];
 
-check('2019-02-02', 'BJP', 'HDP', 0, removeList);
-// check('2018-05-01', 'XAY', 'BJP', 0, backList);
+check("2020-01-22", "BJP", "HDP", 0, removeList);
+
+sendMsg({
+  title: "start check(30s):",
+  message: "2020-01-22: BJP --> HDP"
+});
+
+check("2020-01-20", "BJP", "YZK", 0, []);
+sendMsg({
+  title: "start check(30s):",
+  message: "2020-01-20: BJP --> YZK"
+});
