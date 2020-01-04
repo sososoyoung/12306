@@ -139,7 +139,7 @@ function reCheck(date, from, to, num, siteList) {
   }
   timer[key] = setTimeout(function() {
     check(date, from, to, num, siteList);
-  }, 1000 * 30 * 1);
+  }, 1000 * 45 * 1);
 }
 
 // start
@@ -160,5 +160,13 @@ setTimeout(() => {
   sendMsg({
     title: "start check(30s):",
     message: "2020-01-20: BJP --> YZK"
+  });
+}, 15000);
+
+setTimeout(() => {
+  check("2020-02-01", "YZK", "BJP", 0, ["Z282", "K102", "K4052"]);
+  sendMsg({
+    title: "start check(30s):",
+    message: "2020-01-20: YZK --> BJP"
   });
 }, 15000);
