@@ -2,6 +2,7 @@ const fs = require("fs");
 const https = require("https");
 const { table } = require("table");
 const { sendMsg } = require("./msg.js");
+const TIMEOUT = 45;
 
 // String
 var ca = fs.readFileSync("./cert/srca.cer.pem");
@@ -139,7 +140,7 @@ function reCheck(date, from, to, num, siteList) {
   }
   timer[key] = setTimeout(function() {
     check(date, from, to, num, siteList);
-  }, 1000 * 45 * 1);
+  }, 1000 * TIMEOUT * 1);
 }
 
 // start
@@ -151,14 +152,14 @@ const removeList = ["K5211", "K599"];
 check("2020-01-22", "BJP", "HDP", 0, removeList);
 
 sendMsg({
-  title: "start check(30s):",
+  title: `start check(${TIMEOUT}s):`,
   message: "2020-01-22: BJP --> HDP"
 });
 
 setTimeout(() => {
   check("2020-01-20", "BJP", "YZK", 0, []);
   sendMsg({
-    title: "start check(30s):",
+    title: `start check(${TIMEOUT}s):`,
     message: "2020-01-20: BJP --> YZK"
   });
 }, 15000);
@@ -166,7 +167,7 @@ setTimeout(() => {
 setTimeout(() => {
   check("2020-02-01", "YZK", "BJP", 0, ["Z282", "K102", "K4052"]);
   sendMsg({
-    title: "start check(30s):",
+    title: `start check(${TIMEOUT}s):`,
     message: "2020-01-20: YZK --> BJP"
   });
-}, 15000);
+}, 30000);
