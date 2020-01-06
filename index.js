@@ -66,6 +66,8 @@ function showTable({ date, from, to, list }) {
   console.log(output);
 }
 
+const trainCountMap = {};
+
 function check(date, from, to, removeList) {
   console.log(`check: ${from}-${to} ${new Date()}`);
   request(date, from, to)
@@ -93,12 +95,16 @@ function check(date, from, to, removeList) {
     })
     .then(({ result, checked, map }) => {
       if (result.length < 1) {
-        return reCheck(date, from, to, num, removeList);
+        return reCheck(date, from, to, removeList);
       }
-      if (num && result.length > num) {
+      const name = `${from}_${to}`;
+      if (!trainCountMap[name]) {
+        trainCountMap[name] = result.length;
+      } else if (result.length > trainCountMap[name]) {
         // Object
         sendMsg({ title: "新增车次", message: "检测到新增车次!" });
       }
+
       const usefull = {
         have: false,
         date,
