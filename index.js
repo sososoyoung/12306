@@ -156,12 +156,15 @@ function reCheck(date, from, to, siteList) {
 // start
 console.log("start at:", new Date());
 
-works.forEach((conf, idx) => {
-  setTimeout(() => {
+for (let idx = 0; idx < works.length; idx++) {
+  const conf = works[idx];
+  const timeout = 15000 * idx;
+  const t = setTimeout(() => {
+    clearTimeout(t);
     check(conf.date, conf.from, conf.to, conf.passList);
     sendMsg({
       title: `start check(${TIMEOUT}s):`,
       message: "2020-01-20: YZK --> BJP"
     });
-  }, 15000 * idx);
-});
+  }, timeout);
+}
