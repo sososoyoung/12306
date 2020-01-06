@@ -163,8 +163,8 @@ for (let idx = 0; idx < works.length; idx++) {
     clearTimeout(t);
     check(conf.date, conf.from, conf.to, conf.passList);
     sendMsg({
-      title: `start check(${TIMEOUT}s):`,
-      message: "2020-01-20: YZK --> BJP"
+      title: `start check(${15 * works.length}s):`,
+      message: `${conf.date}: ${conf.from}--> ${conf.to}`
     });
   }, timeout);
 }
