@@ -2,6 +2,7 @@ const fs = require("fs");
 const https = require("https");
 const { table } = require("table");
 const { sendMsg } = require("./msg.js");
+const { works } = require("./config");
 const TIMEOUT = 45;
 
 // String
@@ -64,9 +65,10 @@ function showTable({ date, from, to, list }) {
   const output = table(data);
   console.log(output);
 }
-function check(date, from, to, num, removeList) {
+
+function check(date, from, to, removeList) {
   console.log(`check: ${from}-${to} ${new Date()}`);
-  request(date, from, to, num)
+  request(date, from, to)
     .then((data = {}) => {
       const { result = [], map } = data;
       let resultMap = result.map(item => item.split("|"));
@@ -122,52 +124,38 @@ function check(date, from, to, num, removeList) {
       if (usefull.have) {
         sendMsg({
           title: `${date}:${from}-->${to} 有票`,
-          message: usefull.list.map(i => i.train_name).join(", ")
+          message: `列车: ${usefull.list.map(i => i.train_name).join(", ")}`
         });
         showTable(usefull);
       }
-      reCheck(date, from, to, num, removeList);
+      reCheck(date, from, to, removeList);
     })
     .catch(e => {
       console.error("check err:", e);
     });
 }
+
 let timer = {};
-function reCheck(date, from, to, num, siteList) {
+
+function reCheck(date, from, to, siteList) {
   let key = `${date}:${from}-->${to}`;
   if (timer[key]) {
     clearTimeout(timer[key]);
   }
   timer[key] = setTimeout(function() {
-    check(date, from, to, num, siteList);
+    check(date, from, to, siteList);
   }, 1000 * TIMEOUT * 1);
 }
 
 // start
 console.log("start at:", new Date());
-// const goList = ["T7", "T231", "Z19", "Z43"];
-// const backList = ["T42", "T56", "T232", "Z20", "Z44"];
-const removeList = ["K5211", "K599"];
 
-check("2020-01-22", "BJP", "HDP", 0, removeList);
-
-sendMsg({
-  title: `start check(${TIMEOUT}s):`,
-  message: "2020-01-22: BJP --> HDP"
+works.forEach((conf, idx) => {
+  setTimeout(() => {
+    check(conf.date, conf.from, conf.to, conf.passList);
+    sendMsg({
+      title: `start check(${TIMEOUT}s):`,
+      message: "2020-01-20: YZK --> BJP"
+    });
+  }, 15000 * idx);
 });
-
-setTimeout(() => {
-  check("2020-01-20", "BJP", "YZK", 0, []);
-  sendMsg({
-    title: `start check(${TIMEOUT}s):`,
-    message: "2020-01-20: BJP --> YZK"
-  });
-}, 15000);
-
-setTimeout(() => {
-  check("2020-02-01", "YZK", "BJP", 0, ["Z282", "K102", "K4052"]);
-  sendMsg({
-    title: `start check(${TIMEOUT}s):`,
-    message: "2020-01-20: YZK --> BJP"
-  });
-}, 30000);
