@@ -102,7 +102,7 @@ function check(date, from, to, removeList) {
         trainCountMap[name] = result.length;
       } else if (result.length > trainCountMap[name]) {
         // Object
-        sendMsg({ title: "新增车次", message: "检测到新增车次!" });
+        sendMsg({ title: name+" 新增车次", message: "检测到新增车次!" });
       }
 
       const usefull = {
