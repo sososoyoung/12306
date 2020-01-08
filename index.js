@@ -68,7 +68,7 @@ function showTable({ date, from, to, list }) {
 
 const trainCountMap = {};
 
-function check(date, from, to, removeList) {
+function check(date, from, to, removeList, seat = []) {
   console.log(`check: ${from}-${to} ${new Date()}`);
   request(date, from, to)
     .then((data = {}) => {
@@ -95,14 +95,14 @@ function check(date, from, to, removeList) {
     })
     .then(({ result, checked, map }) => {
       if (result.length < 1) {
-        return reCheck(date, from, to, removeList);
+        return reCheck(date, from, to, removeList, seat);
       }
       const name = `${from}_${to}`;
       if (!trainCountMap[name]) {
         trainCountMap[name] = result.length;
       } else if (result.length > trainCountMap[name]) {
         // Object
-        sendMsg({ title: name+" 新增车次", message: "检测到新增车次!" });
+        sendMsg({ title: name + " 新增车次", message: "检测到新增车次!" });
       }
 
       const usefull = {
@@ -123,8 +123,12 @@ function check(date, from, to, removeList) {
             Number(item.yw) > 0 ||
             item.yw == "有")
         ) {
-          usefull.have = true;
-          usefull.list.push(item);
+          if (
+            seat.filter(s => Number(item[s]) > 0 || item[s] == "有").length > 0
+          ) {
+            usefull.have = true;
+            usefull.list.push(item);
+          }
         }
       });
       if (usefull.have) {
@@ -134,7 +138,7 @@ function check(date, from, to, removeList) {
         });
         showTable(usefull);
       }
-      reCheck(date, from, to, removeList);
+      reCheck(date, from, to, removeList, seat);
     })
     .catch(e => {
       console.error("check err:", e);
@@ -143,13 +147,13 @@ function check(date, from, to, removeList) {
 
 let timer = {};
 
-function reCheck(date, from, to, siteList) {
+function reCheck(date, from, to, siteList, seat) {
   let key = `${date}:${from}-->${to}`;
   if (timer[key]) {
     clearTimeout(timer[key]);
   }
   timer[key] = setTimeout(function() {
-    check(date, from, to, siteList);
+    check(date, from, to, siteList, seat);
   }, 1000 * TIMEOUT * 1);
 }
 
@@ -161,7 +165,7 @@ for (let idx = 0; idx < works.length; idx++) {
   const timeout = 15000 * idx;
   const t = setTimeout(() => {
     clearTimeout(t);
-    check(conf.date, conf.from, conf.to, conf.passList);
+    check(conf.date, conf.from, conf.to, conf.passList, conf.seat);
     sendMsg({
       title: `start check(${15 * works.length}s):`,
       message: `${conf.date}: ${conf.from}--> ${conf.to}`
