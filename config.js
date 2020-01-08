@@ -3,7 +3,7 @@ exports.works = [
     date: "2020-01-22",
     from: "BJP",
     to: "HDP",
-    passList: ["K5211", "K599"],
+    passList: ["K5211", "K599", "G9061"],
     seat: ["yz", "g2", "yw"]
   },
   {
