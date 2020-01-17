@@ -1,23 +1,16 @@
 exports.works = [
   {
-    date: "2020-01-22",
-    from: "BJP",
-    to: "HDP",
-    passList: ["K5211", "K599", "G9061"],
-    seat: ["yz", "g2", "yw"]
-  },
-  {
-    date: "2020-01-20",
+    date: "2020-01-18",
     from: "BJP",
     to: "YZK",
     passList: [],
     seat: ["yw"]
   },
   {
-    date: "2020-02-01",
-    from: "YZK",
-    to: "BJP",
-    passList: ["Z282", "K102", "K4052"],
+    date: "2020-01-19",
+    from: "BJP",
+    to: "YZK",
+    passList: [],
     seat: ["yw"]
   }
 ];
